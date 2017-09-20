@@ -13,7 +13,7 @@ class Enemy{
 	public:
 		Enemy(int atk);
 		virtual ~Enemy();
-		virtual void taunt() const = 0; // pure virtual, so this is a abstract class
+		virtual void taunt() const = 0; // pure virtual, so this is an abstract class
 		virtual void attack() const;
 
 	protected:

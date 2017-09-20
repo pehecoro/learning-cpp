@@ -57,8 +57,12 @@ public:
 		reward.push_back(rew);
 	}
 
-	std::vector<BagItem>& getRequirements() {
+	const std::vector<BagItem>& getRequirements() const{
 		return requirements;
+	}
+
+	const std::vector<BagItem>& getReward() const{
+		return reward;
 	}
 };
 
@@ -94,6 +98,11 @@ public:
 		return quests;
 	}
 
+
+	void setInventory(const std::vector<BagItem>& newInventory) {
+		inventory = newInventory;
+	}
+
 };
 
 Item createItem() {
@@ -121,7 +130,7 @@ template <typename T>
 void showOptions(const std::vector<T>& options) {
 	for (std::vector<T>::const_iterator it = options.begin();
 		it != options.end(); it++) {
-		std::cout << (*it) << "  [" << it - options.begin() << "]" << std::endl;
+		std::cout << "| " << (*it) << "  [" << it - options.begin() << "]" << std::endl;
 	}
 }
 
@@ -147,8 +156,9 @@ Quest createQuest(const std::vector<Item>& itemsCreated) {
 	std::vector<BagItem> requirements;
 	std::vector<BagItem> rewards;
 	std::cin.clear();
+	std::cin.ignore(10000, '\n');
 	std::cout << "Name: ";
-	std::cin >> name;
+	std::getline(std::cin, name);
 	std::cin.clear();
 	std::cin.ignore(10000, '\n');
 	std::cout << "Description:";
@@ -179,65 +189,116 @@ Quest createQuest(const std::vector<Item>& itemsCreated) {
 	return Quest(name, description, requirements, rewards);
 }
 
-Quest receiveQuest(const std::vector<Quest>& quests) {
-	unsigned int questId;
-	std::cout << "+---------Receive Quest--------+" << std::endl;
-	std::cout << "|Type the number of the quest  |" << std::endl;
-	std::cout << "|Quests Available:             |" << std::endl;
-	showOptions(quests);
-	std::cout << "|______________________________|" << std::endl;
+template <typename T>
+unsigned int receiveId(const std::vector<T>& obj, const std::string name) {
+	unsigned int objId;
+	std::cout << "+---------Receive "<< name <<"--------+" << std::endl;
+	std::cout << "|Type the number of the "<< name <<"  |" << std::endl;
+	std::cout << "|"<< name <<" Available:             |" << std::endl;
+	showOptions(obj);
+	std::cout << "|                             |" << std::endl;
+	std::cout << "| To leave                [-1]|" << std::endl;
+	std::cout << "+-----------------------------+" << std::endl;
 	do {
 		std::cout << ">";
-		std::cin >> questId;
-	} while (questId >= quests.size());
-	return quests.at(questId);
+		std::cin >> objId;
+	} while (objId != -1 && objId >= obj.size());
+	return objId;
 }
 
-BagItem receiveItem(const std::vector<Item>& items) {
-	unsigned int itemId, qty;
-	std::cout << "+---------Receive Item--------+" << std::endl;
-	std::cout << "|Type the number of the item   |" << std::endl;
-	std::cout << "|Items available:              |" << std::endl;
-	showOptions(items);
-	std::cout << "|______________________________|" << std::endl;
-	do {
-		std::cout << ">";
-		std::cin >> itemId;
-	} while (itemId >= items.size());
+void receiveQuest(Player& p, const std::vector<Quest>& quests) {
+	unsigned int questId = receiveId(quests, "Quest");
+	if (questId == -1)return;
+	p.receiveQuest(quests.at(questId));
+}
+
+void receiveItem(Player& p, const std::vector<Item>& items) {
+	unsigned int itemId = receiveId(items, "Item");
+	if (itemId == -1)return;
+	unsigned int qty;
 	std::cout << "Quantity: ";
 	std::cin >> qty;
 	BagItem bagItem = { items.at(itemId),qty };
-	return bagItem;
+	p.receiveItem(bagItem);
 }
 
 void showInventory(Player& p) {
-	std::cout << "+---------Inventory--------+" << std::endl;
+	std::cout << "+-----------Inventory---------+" << std::endl;
 	showItems(p.getInventory());
-	std::cout << "+--------------------------+" << std::endl;
+	std::cout << "+-----------------------------+" << std::endl;
+}
+
+bool tryCompleteQuest(Player& p, unsigned int questId) {
+	const std::vector<BagItem> requirements = p.getQuests().at(questId).getRequirements();
+	const std::vector<BagItem> reward = p.getQuests().at(questId).getReward();
+	std::vector<BagItem> newInventory = p.getInventory();
+
+
+	std::string readyList(requirements.size(), 'f');
+	unsigned int rdyIt = 0;
+
+	if (requirements.size() > 0) {
+
+		for (std::vector<BagItem>::const_iterator itReq = requirements.begin();
+			itReq != requirements.end(); ++itReq) {
+
+			for (std::vector<BagItem>::iterator itInv = newInventory.begin();
+				itInv != newInventory.end(); ++itInv) {
+
+				if (itReq->item.getName() == itInv->item.getName() && itInv->units >= itReq->units) {
+					if (itInv->units == itReq->units) {
+						newInventory.erase(itInv);
+					}
+					else {
+						itInv->units -= itReq->units;
+					}
+					readyList[rdyIt] = 't';
+					if (newInventory.size() == 0)break;
+				}
+
+			}
+
+			rdyIt++;
+		}
+	}
+	if (readyList.find('f') == std::string::npos) {
+
+		for (std::vector<BagItem>::const_iterator it = reward.begin();
+			it != reward.end(); ++it) {
+			newInventory.push_back((*it));
+		}
+
+		p.setInventory(newInventory);
+
+		return true;
+	}
+
+	return false;
 }
 
 void completeQuest(Player& p) {
 	unsigned int questId;
 	bool success = false;
-	std::cout << "+---------Complete Quest---------+" << std::endl;
-	std::cout << "|Type the number of the quest    |" << std::endl;
-	std::cout << "|Quests:                         |" << std::endl;
+	std::cout << "+-------Complete Quest--------+" << std::endl;
+	std::cout << "|Type the number of the quest |" << std::endl;
+	std::cout << "|Quests:                      |" << std::endl;
 	showOptions(p.getQuests());
-	std::cout << "|________________________________|" << std::endl;
+	std::cout << "|                             |" << std::endl;
+	std::cout << "| To leave                [-1]|" << std::endl;
+	std::cout << "+-----------------------------+" << std::endl;
 	do {
 		std::cout << ">";
 		std::cin >> questId;
+		if (questId == -1)return;//Uint, so -1 represented internally as 4294967295
 	}while (questId >= p.getQuests().size());
-	//success = tryCompleteQuest(p,questId);
+	success = tryCompleteQuest(p,questId);
 	if (success) {
-		std::cout << "Congratulations! You completed the quest";
+		std::cout << "Congratulations! You completed the quest" << std::endl;
 	}
 	else {
-		std::cout << "Sorry, you don't have the requirements";
+		std::cout << "Sorry, you don't have the requirements" << std::endl;
 	}
 }
-
-
 
 int main() {
 	int cmd;
@@ -258,7 +319,7 @@ int main() {
 		std::cout << "| See inventory           [5] |" << std::endl;
 		std::cout << "| Complete a Quest        [6] |" << std::endl;
 		std::cout << "|                             |" << std::endl;
-		std::cout << "| Leave                   [0] |" << std::endl;
+		std::cout << "| Leave                  [-1] |" << std::endl;
 		std::cout << "+-----------------------------+" << std::endl;
 		std::cout << "> ";
 		std::cin >> cmd;
@@ -269,18 +330,18 @@ int main() {
 			questsCreated.push_back(createQuest(itemsCreated));
 		}
 		else if (cmd == 3) {
-			p.receiveQuest(receiveQuest(questsCreated));
+			receiveQuest(p,questsCreated);
 		}
 		else if (cmd == 4) {
-			p.receiveItem(receiveItem(itemsCreated));
+			receiveItem(p, itemsCreated);
 		}
 		else if (cmd == 5) {
 			showInventory(p);
 		}
 		else if (cmd == 6) {
-			//completeQuest(p);
+			completeQuest(p);
 		}
-	} while (cmd != 0);
+	} while (cmd != -1);
 
 	return 0;
 }
