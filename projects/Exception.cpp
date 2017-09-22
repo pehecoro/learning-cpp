@@ -3,7 +3,7 @@
 #include <vector>
 
 /*
-	Exception, function pointer, auto, decltype, some optimizations vector
+	Exception, function pointer, auto, decltype, some vector optimizations 
 */
 
 class Point{
@@ -71,7 +71,9 @@ int main() {
 		std::cout << (*it) << '\n';
 	}
 
-	//No reallocate and no copy constructor
+	//Costs: ~~ ~~ ~~~
+	//
+	//->No reallocate and no copy constructor
 	std::cout << "+-------Example2 Vector--------+" << '\n';
 	decltype(points1) points2;
 	points2.reserve(3);
