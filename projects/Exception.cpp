@@ -22,6 +22,12 @@ class Point{
 		}
 };
 
+//Dangerous
+void showNumber(void* thing) {
+	int* x = (int*)thing;
+	std::cout << *x << '\n';
+}
+
 void multiply(int a, int b) {
 	std::cout << a << " * " << b << ": " << a*b << '\n';
 }
@@ -56,6 +62,8 @@ int main() {
 
 	int a = rand() % 10;
 	int b = 10;
+
+	showNumber(&a);
 
 	whatDo(a, b);
 
