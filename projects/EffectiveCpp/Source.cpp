@@ -4,6 +4,9 @@
 #include "Item7.h"
 #include "Item8.h"
 #include "Item9.h"
+#include "Item10.h"
+#include "Item11.h"
+#include "Item12.h"
 
 using namespace std;
 
@@ -28,6 +31,18 @@ int main()
 	else if (item == 9)
 	{
 		testItem9();
+	}
+	else if (item == 10)
+	{
+		testItem10();
+	}
+	else if (item == 11)
+	{
+		testItem11();
+	}
+	else if (item == 12)
+	{
+		testItem12();
 	}
 
 	cin.ignore();
