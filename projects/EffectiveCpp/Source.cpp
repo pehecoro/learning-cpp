@@ -7,13 +7,15 @@
 #include "Item10.h"
 #include "Item11.h"
 #include "Item12.h"
+#include "Item13.h"
+#include "Item14.h"
 
 using namespace std;
 
 int main()
 {
 	unsigned int item;
-	cout << "Type the number of the item: ";
+	cout << "Type the number of the item(6 to 14): ";
 	cin >> item;
 
 	if (item == 6) 
@@ -43,6 +45,14 @@ int main()
 	else if (item == 12)
 	{
 		testItem12();
+	}
+	else if (item == 13)
+	{
+		testItem13();
+	}
+	else if (item == 14)
+	{
+		testItem14();
 	}
 
 	cin.ignore();
